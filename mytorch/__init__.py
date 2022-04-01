@@ -3,7 +3,6 @@ from .testing import MathTest, MathTestVariable  # noqa: F401,F403
 # MODULE 0
 from .module import *  # noqa: F401,F403
 
-
 # MODULE 1
 from .autodiff import *  # noqa: F401,F403
 
@@ -21,3 +20,4 @@ from .nn import *  # noqa: F401,F403
 
 from .optim import *  # noqa: F401,F403
 from .loss import * # noqa: F401,F403
+from .learning_rate_scheduler import * # noqa: F401,F403

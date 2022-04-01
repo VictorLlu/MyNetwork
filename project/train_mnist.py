@@ -41,8 +41,11 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', default=5, metavar='epoch', type=int)
     parser.add_argument('--gpu', default=0, metavar='gpu', type=int)
     parser.add_argument('--bs', default=16, metavar='N', type=int)
-    parser.add_argument('--lr', type=float, default=0.05, metavar='LR',
-                        help='learning rate (default: 0.05)')
+    parser.add_argument('--lr', type=float, default=0.2, metavar='LR',
+                        help='learning rate (default: 0.2)')
+    parser.add_argument('--lr_drop', type=float, default=0.5, metavar='LrDrop',
+                        help='learning rate_drop (default: 0.5)')
+    parser.add_argument('--lr_drop_epochs', default=1, metavar='DropEpoch', type=int)
     parser.add_argument('--wd', type=float, default=0.0001, metavar='WeightDecay',
                         help='weight decay (default: 0.0001)')  
     parser.add_argument('--hidden_plane', default=128, metavar='hidden', type=int)
@@ -53,7 +56,7 @@ if __name__ == "__main__":
     
     cuda.select_device(args.gpu)
 
-    model_name = args.model + "-%d-%d-%f-%.6f"%(args.hidden_plane, args.bs, args.lr, args.wd)
+    model_name = args.model + "-%d-%d-%f-%.6f-%.1f"%(args.hidden_plane, args.bs, args.lr, args.wd, args.lr_drop)
     checkpoint_path = os.path.join(args.checkpoint, model_name)
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
@@ -69,17 +72,17 @@ if __name__ == "__main__":
         if not os.path.exists(csv_name):
             with open(csv_name, "w+", newline='') as file: 
                 csv_file = csv.writer(file)
-                head = ["name", "epoch", "bs", "hidden layer", "learning rate", "weight decay", "acc"]
+                head = ["name", "epoch", "bs", "hidden layer", "learning rate", "weight decay", "lr_drop", "acc"]
                 csv_file.writerow(head)
 
-    info = "gpu: %d, bs: %d, lr: %f, wd: %f, hidden_plane: %d, checkpoint: %s"%\
-    (args.gpu, args.bs, args.lr, args.wd, args.hidden_plane, checkpoint_path)
+    info = "gpu: %d, bs: %d, lr: %f, wd: %f, hidden_plane: %d, lr_drop: %.1f, checkpoint: %s"%\
+    (args.gpu, args.bs, args.lr, args.wd, args.hidden_plane, args.lr_drop, checkpoint_path)
     print(info)
     logger.critical(info)
 
     max_epochs = args.epochs
     bs = args.bs
-    lr = args.lr
+    base_lr = args.lr
     weight_decay = args.wd
 
     data_train, data_val = (make_mnist(0, 10000), make_mnist(10000, 10500))
@@ -87,14 +90,14 @@ if __name__ == "__main__":
     (X_val, y_val) = data_val
     
     model = TwoLayerNetwork(hidden_plane=args.hidden_plane)
-    # mytorch.save(model, os.path.join(checkpoint_path, 'two_layer_net.pkl'))
-    # state_dict = mytorch.load(os.path.join(checkpoint_path, 'two_layer_net.pkl'))
-    # mytorch.load_state_dict(model, state_dict)
 
     n_training_samples = len(X_train)
     n_step_per_epoch = n_training_samples // bs
     n_test_samples = len(X_val)
-    optim = mytorch.SGD(model.parameters(), lr)
+
+    optim = mytorch.SGD(model.parameters(), base_lr)
+    lr_sch = mytorch.StepLR(optim, args.lr_drop, args.lr_drop_epochs)
+
     losses = []
     best_acc = 0.0
     best_model_name = ""
@@ -118,8 +121,6 @@ if __name__ == "__main__":
             # Forward
             out = model.forward(x.view(bs, H*W))
             loss = mytorch.CrossEntropyLoss(out, y)
-            # prob = (out * y).sum(1)
-            # loss = -(prob / y.shape[0]).sum()
 
             reg_loss = 0
             for param in model.parameters():
@@ -132,6 +133,8 @@ if __name__ == "__main__":
             losses.append(loss[0])
             # Update
             optim.step()
+            lr_sch.step(epoch)
+
             end_time = time.time()
             iter_time = end_time - begin_time
             remain_time = (max_epochs - epoch) * iter_time * n_step_per_epoch\
@@ -139,7 +142,7 @@ if __name__ == "__main__":
             remain_hour = remain_time // 3600
             remain_min = remain_time // 60
             info = 'Epoch [%d][%d/%d], etc: %dh:%dmin, lr: %f, loss: %f'%\
-                            (epoch, batch_num, n_step_per_epoch, remain_hour, remain_min, lr, loss[0])
+                            (epoch, batch_num, n_step_per_epoch, remain_hour, remain_min, lr_sch.get_lr(), loss[0])
             # print(info)
             logger.critical(info)
 
@@ -185,10 +188,10 @@ if __name__ == "__main__":
                 model.train()
     mytorch.save(model, os.path.join(checkpoint_path, 'last.pkl'))
     info = 'Best acc: %.4f'%best_acc
-    # print(info)
+    print(info)
     logger.critical(info)
     if args.grid_search is not None:
         with open(csv_name, "a+", newline='') as file: 
             csv_file = csv.writer(file)
-            data = [model_name, max_epochs, bs, args.hidden_plane, lr, weight_decay, best_acc]
+            data = [model_name, max_epochs, bs, args.hidden_plane, base_lr, weight_decay, args.lr_drop, best_acc]
             csv_file.writerow(data)

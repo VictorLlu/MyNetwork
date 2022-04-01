@@ -6,6 +6,7 @@ class Optimizer:
 class SGD(Optimizer):
     def __init__(self, parameters, lr=1.0):
         super().__init__(parameters)
+        self.base_lr = lr
         self.lr = lr
 
     def zero_grad(self):

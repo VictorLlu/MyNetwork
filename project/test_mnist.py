@@ -55,9 +55,7 @@ if __name__ == "__main__":
     state_dict = mytorch.load(checkpoint_path)
     mytorch.load_state_dict(model, state_dict)
     model.eval()
-    # mytorch.save(model, os.path.join(checkpoint_path, 'two_layer_net.pkl'))
-    # state_dict = mytorch.load(os.path.join(checkpoint_path, 'two_layer_net.pkl'))
-    # mytorch.load_state_dict(model, state_dict)
+
     n_test_samples = len(X_val)
 
     best_acc = 0.0
