@@ -4,6 +4,7 @@ import numpy as np
 import argparse
 import os
 from tqdm import tqdm
+from numba import cuda
 from model import TwoLayerNetwork
 
 mndata = MNIST("data/")
@@ -38,10 +39,13 @@ def default_log_fn(epoch, total_loss, acc):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--gpu', default=0, metavar='gpu', type=int)
     parser.add_argument('--bs', default=16, metavar='N', type=int)
     parser.add_argument('--model', default='two_layer_net', type=str, metavar='name')                  
     parser.add_argument('--checkpoint', type=str, metavar='checkpoint')
     args = parser.parse_args()
+
+    cuda.select_device(args.gpu)
 
     assert args.checkpoint is not None, "Please provide  checkpoint path!"
     checkpoint_path = args.checkpoint
