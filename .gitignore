@@ -1,0 +1,9 @@
+/.hypothesis/
+/.pytest_cache/
+/mytorch/__pycache__
+/mytorch.egg-info/
+/project/output/
+/tests/
+*.gz
+*.log
+.DS_Store
