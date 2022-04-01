@@ -1,4 +1,6 @@
 # Two-layer Nerual Network 
+![architecture](figure/architecture.png)
+FIGRUE 1. Flow chart of `mytorch` auto grad mechanism.
 ## Introduction
 This repo is the first homework of course DATA620004 Nerual Network and Deep Learning. 
 This project is required to construct a two-layer nerual network and be trained as a qualified classifier.
@@ -51,6 +53,7 @@ mytorch----autodiff.py
         |               |--StepLR
 ```
 Details of implementation is illustrated throughly in report.
+The core flow chart is shown in the figure 1.
 With the help of `mytorch`, the two-layer network achieves 97% accuracy on MNIST validation set with high efficiency.
 
 ## Preparation
