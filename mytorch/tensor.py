@@ -5,6 +5,7 @@ Implementation of the core Tensor object for autodifferentiation.
 from .autodiff import Variable
 from .tensor_data import TensorData
 from . import operators
+import numpy as np
 
 
 class Tensor(Variable):
@@ -177,6 +178,12 @@ class Tensor(Variable):
     def make(storage, shape, strides=None, backend=None):
         "Create a new tensor from data"
         return Tensor(TensorData(storage, shape, strides), backend=backend)
+    
+    def numpy(self):
+        contiguous_tensor = self.backend.Copy.apply(self)
+        storage = contiguous_tensor._tensor._storage
+        storage = storage.reshape(self.shape)
+        return storage
 
     def expand(self, other):
         "Method used to allow for backprop over reduce."

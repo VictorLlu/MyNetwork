@@ -4,8 +4,9 @@ import numpy as np
 import argparse
 import os
 from tqdm import tqdm
-from numba import cuda
 from model import TwoLayerNetwork
+import matplotlib.pyplot as plt
+import cv2
 
 mndata = MNIST("data/")
 mndata.gz = True
@@ -39,13 +40,11 @@ def default_log_fn(epoch, total_loss, acc):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpu', default=0, metavar='gpu', type=int)
     parser.add_argument('--bs', default=16, metavar='N', type=int)
+    parser.add_argument('--hidden_plane', default=128, metavar='hidden', type=int)
     parser.add_argument('--model', default='two_layer_net', type=str, metavar='name')                  
     parser.add_argument('--checkpoint', type=str, metavar='checkpoint')
     args = parser.parse_args()
-
-    cuda.select_device(args.gpu)
 
     assert args.checkpoint is not None, "Please provide  checkpoint path!"
     checkpoint_path = args.checkpoint
@@ -55,7 +54,7 @@ if __name__ == "__main__":
 
     bs = args.bs
     
-    model = TwoLayerNetwork()
+    model = TwoLayerNetwork(args.hidden_plane)
     state_dict = mytorch.load(checkpoint_path)
     mytorch.load_state_dict(model, state_dict)
     model.eval()
@@ -65,7 +64,7 @@ if __name__ == "__main__":
     best_acc = 0.0
     best_model_name = ""
     best_saved = False
-   
+
     correct = 0
     for val_example_num in tqdm(range(0, n_test_samples, bs)):
         if n_test_samples - val_example_num <= bs:
@@ -74,6 +73,7 @@ if __name__ == "__main__":
         x_ = (np.array(X_val[val_example_num : val_example_num + bs]) / 255.0 * 0.99) + 0.01
         y = mytorch.tensor(y_, backend=BACKEND)
         x = mytorch.tensor(x_, backend=BACKEND)
+        out = model.forward(x.view(bs, H*W))
         out = mytorch.logsoftmax(out, dim=1)
         for i in range(bs):
             m = -1000
@@ -86,4 +86,4 @@ if __name__ == "__main__":
                 correct += 1
     total_test = n_test_samples // bs * bs
     test_acc = correct / total_test
-    print("=====Acc on MNIST: %.2f====="%(test_acc))
+    print("=====Acc on MNIST: %.3f====="%(test_acc))
