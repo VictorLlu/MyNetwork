@@ -41,7 +41,7 @@ def default_log_fn(epoch, total_loss, acc):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--bs', default=16, metavar='N', type=int)
-    parser.add_argument('--hidden_plane', default=128, metavar='hidden', type=int)
+    parser.add_argument('--hidden_plane', default=1024, metavar='hidden', type=int)
     parser.add_argument('--model', default='two_layer_net', type=str, metavar='name')                  
     parser.add_argument('--checkpoint', type=str, metavar='checkpoint')
     args = parser.parse_args()
